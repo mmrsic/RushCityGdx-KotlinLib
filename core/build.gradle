@@ -1,0 +1,14 @@
+apply plugin: "kotlin"
+
+sourceCompatibility = 1.7
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+sourceSets.main.java.srcDirs = [ "src/" ]
+
+dependencies {
+    compile files('libs/rush-city-lib-1.0-SNAPSHOT.jar')
+}
+
+eclipse.project {
+    name = appName + "-core"
+}
