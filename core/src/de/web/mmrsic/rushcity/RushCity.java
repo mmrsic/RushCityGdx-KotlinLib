@@ -13,7 +13,6 @@ import de.web.mmrsic.rushcity.CityMap.Street;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * {@link ApplicationListener} for Rush City.
@@ -22,7 +21,7 @@ public class RushCity implements ApplicationListener {
     private static final String TAG = RushCity.class.getSimpleName();
 
     private CityMap cityMap;
-    private Car car;
+    private List<Car> cars = new LinkedList<>();
     private TrafficLightsControl lightsControl;
 
     private OrthographicCamera camera;
@@ -33,7 +32,12 @@ public class RushCity implements ApplicationListener {
     public void create() {
         cityMap = new DefaultCityMapCreator().create(24, 32);
         cityMap.print(System.out);
-        car = new Car(cityMap.streetAt(0, 3), cityMap.streetAt(23, 28));
+        int maxRow = cityMap.getNumRows() - 1;
+        int maxCol = cityMap.getNumCols() - 1;
+        cars.add(createCar(0, 3, maxRow, 28));
+        cars.add(createCar(7, 0, maxRow, 28));
+        cars.add(createCar(12, maxCol, 0, 3));
+        cars.add(createCar(maxRow, 18, 2, 0));
         lightsControl = new TrafficLightsControl(new TrafficLightsControl.Pattern() {
             @Override
             public double vehiclePhase() {
@@ -54,7 +58,6 @@ public class RushCity implements ApplicationListener {
         shapeRenderer = new ShapeRenderer();
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         viewport = new StretchViewport(cityMap.getNumCols() * 20, cityMap.getNumRows() * 20, camera);
-        Gdx.app.log(TAG, "Created: " + car);
     }
 
     @Override
@@ -65,8 +68,10 @@ public class RushCity implements ApplicationListener {
 
     @Override
     public void render() {
-        float deltaTime = 4 * Gdx.graphics.getRawDeltaTime();
-        car.addTime(deltaTime);
+        final float deltaTime = 4 * Gdx.graphics.getRawDeltaTime();
+        for (final Car car : cars) {
+            car.addTime(deltaTime);
+        }
         lightsControl.addTime(deltaTime);
 
         Gdx.gl.glClearColor(0, 0, 0, 0);
@@ -87,7 +92,9 @@ public class RushCity implements ApplicationListener {
                 drawRect(streetLight.getColor(), streetLight.getX(), streetLight.getY(), 0.5f);
             }
         }
-        drawRect(Color.YELLOW, car.x(), car.y(), 1);
+        for (final Car car : cars) {
+            drawRect(Color.YELLOW, car.x(), car.y(), 1);
+        }
         shapeRenderer.end();
     }
 
@@ -105,6 +112,23 @@ public class RushCity implements ApplicationListener {
     public void dispose() {
         shapeRenderer.dispose();
         Gdx.app.log(TAG, "Disposed");
+    }
+
+    // HELPERS //
+
+    /**
+     * Create a new {@link Car} instance for given start and target coordinates.
+     *
+     * @param startRow  row of start coordinate
+     * @param startCol  column of start coordinate
+     * @param targetRow row of target coordinate
+     * @param targetCol column of target coordinate
+     * @return newly created instance per call - never null
+     */
+    private Car createCar(int startRow, int startCol, int targetRow, int targetCol) {
+        final Car car = new Car(cityMap.streetAt(startRow, startCol), cityMap.streetAt(targetRow, targetCol));
+        Gdx.app.log(TAG, "Created: " + car);
+        return car;
     }
 
     /**
